@@ -312,7 +312,6 @@ dio_input(void)
 	RPL_STAT(rpl_stats.malformed_msgs++);
         return;
       }
- #if FUZZY
       dio.mc.type = buffer[i + 2];
       dio.mc.flags = buffer[i + 3] << 1;
       dio.mc.flags |= buffer[i + 4] >> 7;
@@ -320,40 +319,6 @@ dio_input(void)
       dio.mc.prec = buffer[i + 4] & 0xf;
       dio.mc.length = buffer[i + 5];
 
-      if(dio.mc.type == RPL_DAG_MC_NONE) {
-        /* No metric container: do nothing */
-      }
-      else if(dio.mc.type == RPL_DAG_MC_FUZZY){
-    	  dio.mc.obj.energy.flags = buffer[i+6];
-    	  dio.mc.obj.energy.energy_est = buffer[i+7];
-    	  dio.mc.obj.etx = get16(buffer, i + 8);
-    	  dio.mc.obj.hopcount = get16(buffer, i + 10);
-    	  dio.mc.obj.latency = get16(buffer, i + 12);
-      }
-      else if(dio.mc.type == RPL_DAG_MC_ETX) {
-        dio.mc.obj.etx = get16(buffer, i + 6);
-
-        PRINTF("RPL: DAG MC: type %u, flags %u, aggr %u, prec %u, length %u, ETX %u\n",
-	       (unsigned)dio.mc.type,  
-	       (unsigned)dio.mc.flags, 
-	       (unsigned)dio.mc.aggr, 
-	       (unsigned)dio.mc.prec, 
-	       (unsigned)dio.mc.length, 
-	       (unsigned)dio.mc.obj.etx);
-      } else if(dio.mc.type == RPL_DAG_MC_ENERGY) {
-        dio.mc.obj.energy.flags = buffer[i + 6];
-        dio.mc.obj.energy.energy_est = buffer[i + 7];
-      } else {
-       PRINTF("RPL: Unhandled DAG MC type: %u\n", (unsigned)dio.mc.type);
-       return;
-      }
-#else
-      dio.mc.type = buffer[i + 2];
-      dio.mc.flags = buffer[i + 3] << 1;
-      dio.mc.flags |= buffer[i + 4] >> 7;
-      dio.mc.aggr = (buffer[i + 4] >> 4) & 0x3;
-      dio.mc.prec = buffer[i + 4] & 0xf;
-      dio.mc.length = buffer[i + 5];
       if(dio.mc.type == RPL_DAG_MC_NONE) {
         /* No metric container: do nothing */
       } else if(dio.mc.type == RPL_DAG_MC_ETX) {
@@ -369,12 +334,19 @@ dio_input(void)
       } else if(dio.mc.type == RPL_DAG_MC_ENERGY) {
         dio.mc.obj.energy.flags = buffer[i + 6];
         dio.mc.obj.energy.energy_est = buffer[i + 7];
+#if FUZZY
+      } else if(dio.mc.type == RPL_DAG_MC_FUZZY){
+    	  dio.mc.obj.energy.flags = buffer[i+6];
+    	  dio.mc.obj.energy.energy_est = buffer[i+7];
+    	  dio.mc.obj.etx = get16(buffer, i + 8);
+    	  dio.mc.obj.hopcount = get16(buffer, i + 10);
+    	  dio.mc.obj.latency = get16(buffer, i + 12);
+#endif
       } else {
        PRINTF("RPL: Unhandled DAG MC type: %u\n", (unsigned)dio.mc.type);
        return;
       }
-#endif /*FUZZY*/
-      
+
       break;
     case RPL_OPTION_ROUTE_INFO:
       if(len < 9) {
@@ -506,15 +478,27 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   pos += 16;
 
 #if !RPL_LEAF_ONLY
-#if FUZZY
 	  instance->of->update_metric_container(instance);
 	  buffer[pos++] = RPL_OPTION_DAG_METRIC_CONTAINER;
+#if FUZZY
 	  buffer[pos++] = 12;
+#else
+    buffer[pos++] = 6;
+#endif //FUZZY
 	  buffer[pos++] = instance->mc.type;
 	  buffer[pos++] = instance->mc.flags >> 1;
 	  buffer[pos] = (instance->mc.flags & 1) << 7;
 	  buffer[pos++] |= (instance->mc.aggr << 4) | instance->mc.prec;
-	  if(instance->mc.type == RPL_DAG_MC_FUZZY){
+    if(instance->mc.type == RPL_DAG_MC_ETX) {
+      buffer[pos++] = 2;
+      set16(buffer, pos, instance->mc.obj.etx);
+      pos += 2;
+    } else if(instance->mc.type == RPL_DAG_MC_ENERGY) {
+      buffer[pos++] = 2;
+      buffer[pos++] = instance->mc.obj.energy.flags;
+      buffer[pos++] = instance->mc.obj.energy.energy_est;
+#if FUZZY
+    } else if(instance->mc.type == RPL_DAG_MC_FUZZY){
 		  buffer[pos++] = 8;
 	      buffer[pos++] = instance->mc.obj.energy.flags;
 	      buffer[pos++] = instance->mc.obj.energy.energy_est;
@@ -524,32 +508,14 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
 	      pos += 2;
 	      set16(buffer, pos, instance->mc.obj.latency);
 	      pos += 2;
-	  }
-#else
-  if(instance->mc.type != RPL_DAG_MC_NONE) {
-    instance->of->update_metric_container(instance);
-
-    buffer[pos++] = RPL_OPTION_DAG_METRIC_CONTAINER;
-    buffer[pos++] = 6;
-    buffer[pos++] = instance->mc.type;
-    buffer[pos++] = instance->mc.flags >> 1;
-    buffer[pos] = (instance->mc.flags & 1) << 7;
-    buffer[pos++] |= (instance->mc.aggr << 4) | instance->mc.prec;
-    if(instance->mc.type == RPL_DAG_MC_ETX) {
-      buffer[pos++] = 2;
-      set16(buffer, pos, instance->mc.obj.etx);
-      pos += 2;
-    } else if(instance->mc.type == RPL_DAG_MC_ENERGY) {
-      buffer[pos++] = 2;
-      buffer[pos++] = instance->mc.obj.energy.flags;
-      buffer[pos++] = instance->mc.obj.energy.energy_est;
+#endif
     } else {
       PRINTF("RPL: Unable to send DIO because of unhandled DAG MC type %u\n",
 	(unsigned)instance->mc.type);
       return;
     }
   }
-#endif /*FUZZY*/  
+
 #endif /* !RPL_LEAF_ONLY */
 
   /* Always add a DAG configuration option. */

@@ -93,33 +93,25 @@ struct rpl_metric_object_energy {
 };
 
 /* Logical representation of a DAG Metric Container. */
+struct rpl_metric_container {
+  uint8_t type;
+  uint8_t flags;
+  uint8_t aggr;
+  uint8_t prec;
+  uint8_t length;
+  union metric_object {
 #if FUZZY
-struct rpl_metric_container {
-  uint8_t type;
-  uint8_t flags;
-  uint8_t aggr;
-  uint8_t prec;
-  uint8_t length;
-  union metric_object {
     struct rpl_metric_object_energy energy;
-    uint16_t etx;                  
-    uint16_t hopcount;                                 
-    uint16_t latency;                                  
+    uint16_t etx;
+    uint16_t hopcount;
+    uint16_t latency;
+#else
+    struct rpl_metric_object_energy energy;
+    uint16_t etx;
+#endif                            
   } obj;
 };
-#else 
-struct rpl_metric_container {
-  uint8_t type;
-  uint8_t flags;
-  uint8_t aggr;
-  uint8_t prec;
-  uint8_t length;
-  union metric_object {
-    struct rpl_metric_object_energy energy;
-    uint16_t etx;                  
-  } obj;
-};
-#endif /*Fuzzy*/
+
 typedef struct rpl_metric_container rpl_metric_container_t;
 /*---------------------------------------------------------------------------*/
 struct rpl_instance;
@@ -128,14 +120,14 @@ struct rpl_dag;
 struct rpl_parent {
   struct rpl_parent *next;
   struct rpl_dag *dag;
-/*#if RPL_DAG_MC != RPL_DAG_MC_NONE*/
+#if RPL_DAG_MC != RPL_DAG_MC_NONE
   rpl_metric_container_t mc;
-/*#endif /* RPL_DAG_MC != RPL_DAG_MC_NONE */ */
+#endif /* RPL_DAG_MC != RPL_DAG_MC_NONE */
   rpl_rank_t rank;
   uint16_t link_metric;
-  #if CONTIKI_DELAY
+#if CONTIKI_DELAY
   uint16_t delay_metric;
-  #endif/*CONTIKI_DELAY*/
+#endif/*CONTIKI_DELAY*/
   
   uint8_t dtsn;
   uint8_t updated;

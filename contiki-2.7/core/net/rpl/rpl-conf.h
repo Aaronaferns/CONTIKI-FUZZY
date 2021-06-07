@@ -52,6 +52,11 @@
  * When MRHOF (RFC6719) is used with ETX, no metric container must
  * be used; instead the rank carries ETX directly.
  */
+
+#define RPL_CONF_DAG_MC RPL_DAG_MC_FUZZY //anirudha
+#define FUZZY 1
+#define RPL_CONF_OF rpl_Fuzzyof
+
 #ifdef RPL_CONF_DAG_MC
 #define RPL_DAG_MC RPL_CONF_DAG_MC
 #else
@@ -67,7 +72,7 @@
 #define RPL_OF RPL_CONF_OF
 #else
 /* ETX is the default objective function. */
-#define RPL_OF Fuzzyof
+#define RPL_OF rpl_mrhof
 #endif /* RPL_CONF_OF */
 
 /* This value decides which DAG instance we should participate in by default. */
