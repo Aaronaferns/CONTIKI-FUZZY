@@ -1,6 +1,8 @@
 #ifndef FIS_H
 #define FIS_H
-
+#include <stdint.h>
+MEMB(time_memb, struct time_queue, MAX_QUEUED_PACKETS);
+LIST(time_list);
 uint8_t qos(uint16_t etx, uint16_t delay, uint16_t hc);
 uint8_t quality(uint16_t q, uint16_t e);
 

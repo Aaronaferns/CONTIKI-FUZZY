@@ -5,14 +5,12 @@
  *         This implementation uses the estimated number of 
  *         transmissions (ETX), Delay, Hopcount and Node Energy metrics.
  *
- * 
- * 
  **/
-#include "fis.h"
 #include "sys/energest.h"
 #include "net/delay.h"
 #include "net/rpl/rpl-private.h"
 #include "net/nbr-table.h"
+#include "sys/battery_charge.h"
 
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
@@ -20,6 +18,7 @@
 #if CONTIKI_DELAY
 #define DLY_SCALE	100
 #define DLY_ALPHA	90
+#include "fis.h"
 #endif /* CONTIKI_DELAY */
 
 #define HOPCOUNT_MAX 255
@@ -108,7 +107,7 @@ calculate_fuzzy_metric(rpl_parent_t *p){
       p->mc.obj.latency,
       p->mc.obj.hopcount
     ),
-      p->mc.obj.energy.energy_est
+    p->mc.obj.energy.energy_est
   );
 }
 
@@ -130,9 +129,9 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx, delay_t delay)
     if(status == MAC_TX_NOACK) {
       packet_etx = MAX_LINK_METRIC * RPL_DAG_MC_ETX_DIVISOR;
     #if CONTIKI_DELAY
-      if(!rimeaddr_cmp(dest,&rimeaddr_null) && list_length(time_list) > 0)
+      if(!rimeaddr_cmp(dest, &rimeaddr_null) && list_length(time_list) > 0)
         {
-		     item = list_pop(time_list);
+		     void *item = list_pop(time_list);
 		     memb_free(&time_memb,item);
 	      }
     #endif /* CONTIKI_DELAY */
@@ -224,8 +223,8 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 
   min_diff = PARENT_SWITCH_THRESHOLD;
 
-  r1 = calculate_rank(p1);
-  r2 = calculate_rank(p2);
+  r1 = calculate_rank(p1, 0);
+  r2 = calculate_rank(p2, 0);
 
   /* Maintain stability of the preferred parent in case of similar ranks. */
   if(p1 == dag->preferred_parent || p2 == dag->preferred_parent) {

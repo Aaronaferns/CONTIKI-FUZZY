@@ -58,7 +58,7 @@
 #endif /* CONTIKI_DELAY */
 
 static void reset(rpl_dag_t *);
-static void neighbor_link_callback(rpl_parent_t *, int, int);
+static void neighbor_link_callback(rpl_parent_t *, int, int, delay_t);
 static rpl_parent_t *best_parent(rpl_parent_t *, rpl_parent_t *);
 static rpl_dag_t *best_dag(rpl_dag_t *, rpl_dag_t *);
 static rpl_rank_t calculate_rank(rpl_parent_t *, rpl_rank_t);
@@ -130,7 +130,7 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx, delay_t delay )
     #if CONTIKI_DELAY
       if(!rimeaddr_cmp(dest,&rimeaddr_null) && list_length(time_list) > 0)
         {
-		     item = list_pop(time_list);
+		     void *item = list_pop(time_list);
 		     memb_free(&time_memb,item);
 	      }
     #endif /* CONTIKI_DELAY */

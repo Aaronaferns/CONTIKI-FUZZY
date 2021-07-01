@@ -44,6 +44,7 @@
 #include "net/uip.h"
 #include "net/uip-ds6.h"
 #include "sys/ctimer.h"
+#include "lib/memb.h"
 
 
 /*---------------------------------------------------------------------------*/
@@ -86,6 +87,8 @@ typedef uint16_t rpl_ocp_t;
 #define RPL_DAG_MC_ENERGY_TYPE_MAINS		0
 #define RPL_DAG_MC_ENERGY_TYPE_BATTERY		1
 #define RPL_DAG_MC_ENERGY_TYPE_SCAVENGING	2
+
+
 
 struct rpl_metric_object_energy {
   uint8_t flags;

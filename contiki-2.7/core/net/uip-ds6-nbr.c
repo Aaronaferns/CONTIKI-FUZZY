@@ -82,11 +82,11 @@ NBR_TABLE_GLOBAL(uip_ds6_nbr_t, ds6_neighbors);
 
 /* Declaration for delay/latency management */
 #include "net/delay.h"
-
+#include "rpl/fis.h"
+//struct time_queue;
 extern unsigned long before_trans;
 extern unsigned long after_ack;
-MEMB(time_memb, struct time_queue, MAX_QUEUED_PACKETS);
-LIST(time_list);
+//MEMB(time_memb, time_queue, MAX_QUEUED_PACKETS);//anirudha
 #endif/*CONTIKI_DELAY*/
 /*---------------------------------------------------------------------------*/
 void
@@ -326,6 +326,7 @@ uip_ds6_get_least_lifetime_neighbor(void)
     nbr = nbr_table_next(ds6_neighbors, nbr);
   }
   return nbr_expiring;
+}
 
   void neighbor_send_mac (rimeaddr_t *dest) {
     struct time_queue *item;

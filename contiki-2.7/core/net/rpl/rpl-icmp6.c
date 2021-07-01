@@ -478,7 +478,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   pos += 16;
 
 #if !RPL_LEAF_ONLY
-	  instance->of->update_metric_container(instance);
+	if(instance->mc.type != RPL_DAG_MC_NONE) {
+    instance->of->update_metric_container(instance);
 	  buffer[pos++] = RPL_OPTION_DAG_METRIC_CONTAINER;
 #if FUZZY
 	  buffer[pos++] = 12;

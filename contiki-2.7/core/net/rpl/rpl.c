@@ -51,6 +51,10 @@
 #include <limits.h>
 #include <string.h>
 
+#ifdef CONTIKI_DELAY
+#include "fis.h"
+#endif
+
 #if UIP_CONF_IPV6
 
 #if RPL_CONF_STATS
