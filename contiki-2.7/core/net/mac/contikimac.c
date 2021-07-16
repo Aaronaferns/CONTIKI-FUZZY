@@ -38,6 +38,9 @@
  *         Niclas Finne <nfi@sics.se>
  *         Joakim Eriksson <joakime@sics.se>
  */
+#ifndef CONTIKI_DELAY
+#define CONTIKI_DELAY 1
+#endif
 
 #include "contiki-conf.h"
 #include "dev/leds.h"
@@ -50,15 +53,13 @@
 #include "sys/compower.h"
 #include "sys/pt.h"
 #include "sys/rtimer.h"
-
-
-#include <string.h>
-
 #if CONTIKI_DELAY
 #include "net/delay.h"
 extern unsigned long before_trans;
 extern unsigned long after_ack;
-#endif /* CONTIKI_DELAY */
+#endif
+
+#include <string.h>
 
 /* TX/RX cycles are synchronized with neighbor wake periods */
 #ifdef CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION
@@ -770,11 +771,9 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
       rtimer_clock_t wt;
       rtimer_clock_t txtime;
       int ret;
-
-      #if CONTIKI_DELAY
+    #if CONTIKI_DELAY
 		  before_trans = (clock_time()*1000)/CLOCK_SECOND;
 	  #endif /* CONTIKI_DELAY */
-
       txtime = RTIMER_NOW();
       ret = NETSTACK_RADIO.transmit(transmit_len);
 

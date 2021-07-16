@@ -44,6 +44,7 @@
 #include "net/tcpip.h"
 #include "net/uip-ds6.h"
 #include "net/rpl/rpl-private.h"
+#include "net/rpl/delay_func.h"
 
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
@@ -168,7 +169,7 @@ rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix, int prefix_len,
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_link_neighbor_callback(const rimeaddr_t *addr, int status, int numtx, delay_t delay)
+rpl_link_neighbor_callback(const rimeaddr_t *addr, int status, int numtx)
 {
   uip_ipaddr_t ipaddr;
   rpl_parent_t *parent;
@@ -186,7 +187,7 @@ rpl_link_neighbor_callback(const rimeaddr_t *addr, int status, int numtx, delay_
         PRINTF("RPL: rpl_link_neighbor_callback triggering update\n");
         parent->updated = 1;
         if(instance->of->neighbor_link_callback != NULL) {
-          instance->of->neighbor_link_callback(parent, status, numtx, delay);
+          instance->of->neighbor_link_callback(parent, status, numtx);
         }
       }
     }
@@ -222,12 +223,12 @@ rpl_init(void)
   uip_ipaddr_t rplmaddr;
   PRINTF("RPL started\n");
   default_instance = NULL;
-
+  #if CONTIKI_DELAY
+  time_memb_init();
+  #endif
   rpl_dag_init();
   rpl_reset_periodic_timer();
-#if CONTIKI_DELAY
-	memb_init(&time_memb);
-#endif /* CONTIKI_DELAY */
+
   /* add rpl multicast address */
   uip_create_linklocal_rplnodes_mcast(&rplmaddr);
   uip_ds6_maddr_add(&rplmaddr);

@@ -26,7 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: collect-common.h,v 1.1 2010/11/03 15:36:38 adamdunkels Exp $
  */
 
 /**
@@ -45,7 +44,7 @@
 void collect_common_net_init(void);
 void collect_common_net_print(void);
 void collect_common_set_sink(void);
-void collect_common_send(uint32_t, uint16_t);
+void collect_common_send(void);
 void collect_common_recv(const rimeaddr_t *originator, uint8_t seqno,
                          uint8_t hops,
                          uint8_t *payload,

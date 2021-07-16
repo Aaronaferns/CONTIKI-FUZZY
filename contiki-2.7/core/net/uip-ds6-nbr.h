@@ -51,10 +51,7 @@
 #include "sys/stimer.h"
 #include "net/uip-ds6.h"
 #include "net/nbr-table.h"
-#if CONTIKI_DELAY
-#include "net/delay.h"
-void neighbor_send_mac (rimeaddr_t *dest);
-#endif
+
 #if UIP_CONF_IPV6_QUEUE_PKT
 #include "net/uip-packetqueue.h"
 #endif                          /*UIP_CONF_QUEUE_PKT */

@@ -57,7 +57,7 @@
  */
 
 #include <string.h>
-#include "net/uip-ds6-nbr.h"
+
 #include "contiki.h"
 #include "dev/watchdog.h"
 #include "net/tcpip.h"
@@ -66,6 +66,11 @@
 #include "net/rime.h"
 #include "net/sicslowpan.h"
 #include "net/netstack.h"
+
+#if CONTIKI_DELAY
+#include "net/delay.h"
+#include "net/rpl/delay_func.h"
+#endif
 
 #if UIP_CONF_IPV6
 
@@ -111,11 +116,6 @@ void uip_log(char *msg);
 #define SICSLOWPAN_COMPRESSION SICSLOWPAN_COMPRESSION_IPV6
 #endif /* SICSLOWPAN_CONF_COMPRESSION */
 #endif /* SICSLOWPAN_COMPRESSION */
-
-#ifndef SICSLOWPAN_CONF_NEIGHBOR_INFO
-/* Default is to use neighbor info updates if using RPL */
-#define SICSLOWPAN_CONF_NEIGHBOR_INFO UIP_CONF_IPV6_RPL
-#endif /* SICSLOWPAN_CONF_NEIGHBOR_INFO */
 
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
 #define SET16(ptr,index,value) do {     \
@@ -1339,15 +1339,9 @@ send_packet(rimeaddr_t *dest)
 #if SICSLOWPAN_CONF_ACK_ALL
     packetbuf_set_attr(PACKETBUF_ATTR_RELIABLE, 1);
 #endif
-
 #if CONTIKI_DELAY
-
-#if SICSLOWPAN_CONF_NEIGHBOR_INFO
-    neighbor_send_mac(dest);
-#endif /* SICSLOWPAN_CONF_NEIGHBOR_INFO */
-
-#endif /* CONTIKI_DELAY */
-
+neighbor_info_send_mac(dest) ;
+#endif
 
   /* Provide a callback function to receive the result of
      a packet transmission. */

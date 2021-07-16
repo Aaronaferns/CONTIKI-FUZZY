@@ -66,7 +66,7 @@ enum energest_type {
 
   ENERGEST_TYPE_MAX
 };
-int16_t get_total_energy_consumption(); // get total node's energy consumption.
+
 void energest_init(void);
 unsigned long energest_type_time(int type);
 #ifdef ENERGEST_CONF_LEVELDEVICE_LEVELS

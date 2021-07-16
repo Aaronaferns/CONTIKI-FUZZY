@@ -40,8 +40,6 @@
 #include "sys/energest.h"
 #include "contiki-conf.h"
 
-
-
 #if ENERGEST_CONF_ON
 
 int energest_total_count;
@@ -114,35 +112,6 @@ energest_flush(void)
     }
   }
 }
-
-uint16_t get_total_energy_consumption()
-{
-  SENSORS_ACTIVATE(battery_sensor);
-  uint32_t energy_consumed = 0;
-  uint32_t cpu, lpm, transmit, listen;
-  uint32_t  time;
-
-  energest_flush();
-
-  cpu = energest_type_time(ENERGEST_TYPE_CPU);// - last_cpu;
-  lpm = energest_type_time(ENERGEST_TYPE_LPM);// - last_lmp;
-  transmit = energest_type_time(ENERGEST_TYPE_TRANSMIT);// - last_transmit;
-  listen = energest_type_time(ENERGEST_TYPE_LISTEN);// - last_listen;
-  SENSORS_DEACTIVATE(battery_sensor);
-
-  time = cpu + lpm;
-
-  energy_consumed = 3L * ((cpu/RTIMER_ARCH_SECOND) * 2 + (lpm/RTIMER_ARCH_SECOND) / 10 + (transmit/RTIMER_ARCH_SECOND) * 20 + (listen/RTIMER_ARCH_SECOND) * 22);
-  
-  if (energy_consumed == 0)
-  {
-    return 1;
-  }
-   // printf("Node's power consummed(mJ) : %lu\n", energy_consumed);
-  // printf("radio-ontime %lu %%\n", (100*(transmit+listen))/time);
-  return energy_consumed; 
-}
-
 /*---------------------------------------------------------------------------*/
 #else /* ENERGEST_CONF_ON */
 void energest_type_set(int type, unsigned long val) {}

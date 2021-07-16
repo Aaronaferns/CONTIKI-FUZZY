@@ -49,6 +49,11 @@
 #include "lib/list.h"
 #include "lib/memb.h"
 #include "sys/ctimer.h"
+#include "net/rpl/rpl-conf.h"
+
+#ifndef CONTIKI_DELAY
+#define CONTIKI_DELAY 1
+#endif 
 
 #include <limits.h>
 #include <string.h>
@@ -548,6 +553,9 @@ rpl_add_parent(rpl_dag_t *dag, rpl_dio_t *dio, uip_ipaddr_t *addr)
     p->dag = dag;
     p->rank = dio->rank;
     p->dtsn = dio->dtsn;
+    #if CONTIKI_DELAY
+    p->delay_metric = RPL_INIT_DELAY_METRIC;
+    #endif
     p->link_metric = RPL_INIT_LINK_METRIC * RPL_DAG_MC_ETX_DIVISOR;
 #if RPL_DAG_MC != RPL_DAG_MC_NONE
     memcpy(&p->mc, &dio->mc, sizeof(p->mc));

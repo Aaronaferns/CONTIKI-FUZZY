@@ -33,6 +33,15 @@
 
 
 #include "platform-conf.h"
+#ifndef RPL_CONF_OF
+#define RPL_CONF_OF rpl_fuzzyof
+#endif
+#ifndef RPL_CONF_DAG_MC
+#define RPL_CONF_DAG_MC RPL_DAG_MC_FUZZY
+#endif
+#ifndef FUZZY
+#define FUZZY 1
+#endif
 
 #define XMAC_CONF_COMPOWER          1
 #define CXMAC_CONF_COMPOWER         1
@@ -191,16 +200,6 @@
 #include PROJECT_CONF_H
 #endif /* PROJECT_CONF_H */
 
-#ifdef CONTIKI_CONF_DELAY
-#define CONTIKI_DELAY CONTIKI_CONF_DELAY
-#else
-#define CONTIKI_DELAY	1
-#endif /* CONTIKI_CONF_DELAY */
 
-#ifdef CONF_FUZZY
-#define FUZZY CONF_FUZZY
-#else
-#define FUZZY	1
-#endif /* CONF_FUZZY */
 
 #endif /* CONTIKI_CONF_H */

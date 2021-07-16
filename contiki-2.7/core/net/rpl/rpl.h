@@ -37,14 +37,14 @@
 
 #ifndef RPL_H
 #define RPL_H
+#include "net/delay.h"
 
 #include "rpl-conf.h"
-#include "net/delay.h"
+
 #include "lib/list.h"
 #include "net/uip.h"
 #include "net/uip-ds6.h"
 #include "sys/ctimer.h"
-
 
 /*---------------------------------------------------------------------------*/
 /* The amount of parents that this node has in a particular DAG. */
@@ -63,7 +63,7 @@ typedef uint16_t rpl_ocp_t;
 #define RPL_DAG_MC_LQL                  6 /* Link Quality Level */
 #define RPL_DAG_MC_ETX                  7 /* Expected Transmission Count */
 #define RPL_DAG_MC_LC                   8 /* Link Color */
-#define RPL_DAG_MC_FUZZY                9 /* HOPCOUNT, LATENCY, NODE ENERGY, ETX */    
+#define RPL_DAG_MC_FUZZY                9 /* Combination of ETX, LATENCY, HOPCOUNT AND ENERGY using fuzzy logic  */
 
 /* DAG Metric Container flags. */
 #define RPL_DAG_MC_FLAG_P               0x8
@@ -93,33 +93,19 @@ struct rpl_metric_object_energy {
 };
 
 /* Logical representation of a DAG Metric Container. */
-#if FUZZY
 struct rpl_metric_container {
   uint8_t type;
   uint8_t flags;
   uint8_t aggr;
   uint8_t prec;
   uint8_t length;
-  union metric_object {
+  struct metric_object {
     struct rpl_metric_object_energy energy;
-    uint16_t etx;                  
-    uint16_t hopcount;                                 
-    uint16_t latency;                                  
+    uint16_t etx;
+    uint16_t hopcount;
+    uint16_t latency;
   } obj;
 };
-#else 
-struct rpl_metric_container {
-  uint8_t type;
-  uint8_t flags;
-  uint8_t aggr;
-  uint8_t prec;
-  uint8_t length;
-  union metric_object {
-    struct rpl_metric_object_energy energy;
-    uint16_t etx;                  
-  } obj;
-};
-#endif /*Fuzzy*/
 typedef struct rpl_metric_container rpl_metric_container_t;
 /*---------------------------------------------------------------------------*/
 struct rpl_instance;
@@ -128,15 +114,12 @@ struct rpl_dag;
 struct rpl_parent {
   struct rpl_parent *next;
   struct rpl_dag *dag;
-/*#if RPL_DAG_MC != RPL_DAG_MC_NONE*/
+#if RPL_DAG_MC != RPL_DAG_MC_NONE
   rpl_metric_container_t mc;
-/*#endif /* RPL_DAG_MC != RPL_DAG_MC_NONE */ */
+#endif /* RPL_DAG_MC != RPL_DAG_MC_NONE */
   rpl_rank_t rank;
   uint16_t link_metric;
-  #if CONTIKI_DELAY
-  uint16_t delay_metric;
-  #endif/*CONTIKI_DELAY*/
-  
+  delay_t delay_metric;
   uint8_t dtsn;
   uint8_t updated;
 };
@@ -207,7 +190,7 @@ typedef struct rpl_instance rpl_instance_t;
  */
 struct rpl_of {
   void (*reset)(struct rpl_dag *);
-  void (*neighbor_link_callback)(rpl_parent_t *, int, int, delay_t);
+  void (*neighbor_link_callback)(rpl_parent_t *, int, int);
   rpl_parent_t *(*best_parent)(rpl_parent_t *, rpl_parent_t *);
   rpl_dag_t *(*best_dag)(rpl_dag_t *, rpl_dag_t *);
   rpl_rank_t (*calculate_rank)(rpl_parent_t *, rpl_rank_t);

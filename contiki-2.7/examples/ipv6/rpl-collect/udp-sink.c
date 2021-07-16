@@ -49,19 +49,8 @@
 #include "collect-common.h"
 #include "collect-view.h"
 
-#include "sys/battery_charge.h"
-
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
-
-#include "sys/timer.h"
-
-/*#define REPAIR_ROOT_FREQUENCY 86400
-
-static struct timer repair_dag_timer;
-void init_repair_dag_timer(void) {
-	timer_set(&repair_dag_timer, CLOCK_SECOND * REPAIR_ROOT_FREQUENCY);
-}*/
 
 #define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
@@ -85,7 +74,7 @@ collect_common_net_print(void)
 }
 /*---------------------------------------------------------------------------*/
 void
-collect_common_send(uint32_t n, uint16_t i)
+collect_common_send(void)
 {
   /* Server never sends */
 }
@@ -149,9 +138,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   PROCESS_BEGIN();
 
-  set_main_powered(1);
-  /*init_repair_dag_timer();*/
-
   PROCESS_PAUSE();
 
   SENSORS_ACTIVATE(button_sensor);
@@ -193,15 +179,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
     if(ev == tcpip_event) {
       tcpip_handler();
     } else if (ev == sensors_event && data == &button_sensor) {
-      PRINTF("Initiating global repair at Sink\n");
+      PRINTF("Initiaing global repair\n");
       rpl_repair_root(RPL_DEFAULT_INSTANCE);
     }
-
-    /*if(timer_expired(&repair_dag_timer)){
-    	PRINTF("Initiating global repair at Sink\n");
-    	rpl_repair_root(RPL_DEFAULT_INSTANCE);
-    	timer_reset(&repair_dag_timer);
-    }*/
   }
 
   PROCESS_END();

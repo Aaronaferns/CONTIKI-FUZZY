@@ -50,13 +50,6 @@
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
 
-#if CONTIKI_DELAY
-#define DLY_SCALE	100
-
-#define DLY_ALPHA	90
-#include "net/delay.h"
-#endif /* CONTIKI_DELAY */
-
 static void reset(rpl_dag_t *);
 static void neighbor_link_callback(rpl_parent_t *, int, int);
 static rpl_parent_t *best_parent(rpl_parent_t *, rpl_parent_t *);
@@ -117,7 +110,7 @@ reset(rpl_dag_t *sag)
 }
 
 static void
-neighbor_link_callback(rpl_parent_t *p, int status, int numtx, delay_t delay )
+neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
 {
   uint16_t recorded_etx = p->link_metric;
   uint16_t packet_etx = numtx * RPL_DAG_MC_ETX_DIVISOR;
@@ -127,16 +120,8 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx, delay_t delay )
   if(status == MAC_TX_OK || status == MAC_TX_NOACK) {
     if(status == MAC_TX_NOACK) {
       packet_etx = MAX_LINK_METRIC * RPL_DAG_MC_ETX_DIVISOR;
-    #if CONTIKI_DELAY
-      if(!rimeaddr_cmp(dest,&rimeaddr_null) && list_length(time_list) > 0)
-        {
-		     item = list_pop(time_list);
-		     memb_free(&time_memb,item);
-	      }
-    #endif /* CONTIKI_DELAY */
     }
-    
-/* Update the EWMA of the ETX for the neighbor. */
+
     new_etx = ((uint32_t)recorded_etx * ETX_ALPHA +
                (uint32_t)packet_etx * (ETX_SCALE - ETX_ALPHA)) / ETX_SCALE;
 
@@ -145,20 +130,6 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx, delay_t delay )
         (unsigned)(new_etx  / RPL_DAG_MC_ETX_DIVISOR),
         (unsigned)(packet_etx / RPL_DAG_MC_ETX_DIVISOR));
     p->link_metric = new_etx;
-    #if CONTIKI_DELAY
-    delay_t packet_delay, recorded_delay, new_delay;
-
-		recorded_delay = p->delay_metric;
-    packet_delay= delay;
-		if(packet_delay > MAX_DELAY) packet_delay = MAX_DELAY;
-			/* Update the EWMA of the delay for the neighbor. */
-		new_delay = (recorded_delay * DLY_ALPHA + packet_delay * (DLY_SCALE - DLY_ALPHA)) / DLY_SCALE;
-   PRINTF("RPL: delay changed from %u to %u (packet delay = %u)\n",
-        (unsigned)(recorded_delay),
-        (unsigned)(new_delay),
-        (unsigned)(packet_delay));
-     p->delay_metric = new_delay;   
-    #endif /*CONTIKI_DELAY*/
   }
 }
 
@@ -290,6 +261,6 @@ update_metric_container(rpl_instance_t *instance)
 
   instance->mc.obj.energy.flags = type << RPL_DAG_MC_ENERGY_TYPE;
   instance->mc.obj.energy.energy_est = path_metric;
-#endif RPL_DAG_MC == RPL_DAG_MC_ETX 
+#endif /* RPL_DAG_MC == RPL_DAG_MC_ETX */
 }
-#endif  RPL_DAG_MC == RPL_DAG_MC_NONE 
+#endif /* RPL_DAG_MC == RPL_DAG_MC_NONE */

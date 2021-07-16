@@ -55,7 +55,11 @@
 #ifdef RPL_CONF_DAG_MC
 #define RPL_DAG_MC RPL_CONF_DAG_MC
 #else
-#define RPL_DAG_MC RPL_DAG_MC_NONE
+#if CONTIKI_DELAY
+#define RPL_DAG_MC RPL_DAG_MC_FUZZY
+#else
+#define RPL_DAG_MC RPL_DAG_MC_ETX
+#endif
 #endif /* RPL_CONF_DAG_MC */
 
 /*
@@ -67,7 +71,11 @@
 #define RPL_OF RPL_CONF_OF
 #else
 /* ETX is the default objective function. */
-#define RPL_OF Fuzzyof
+#if CONTIKI_DELAY
+#define RPL_OF rpl_fuzzyof
+#else 
+#define RPL_OF rpl_mrhof
+#endif /* CONTIKI_DELAY */
 #endif /* RPL_CONF_OF */
 
 /* This value decides which DAG instance we should participate in by default. */
@@ -157,7 +165,8 @@
 #else
 #define RPL_DIO_REDUNDANCY          10
 #endif
-
+/*Initial delay attributed to a link when the Latency is unknown*/
+#define RPL_INIT_DELAY_METRIC        10
 /*
  * Initial metric attributed to a link when the ETX is unknown
  */

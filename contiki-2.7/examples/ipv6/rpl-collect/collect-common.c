@@ -50,12 +50,9 @@ static unsigned long time_offset;
 static int send_active = 1;
 
 #ifndef PERIOD
-#define PERIOD 300
+#define PERIOD 60
 #endif
 #define RANDWAIT (PERIOD)
-
-uint32_t prev_time;
-uint16_t interval;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(collect_common_process, "collect common process");
@@ -114,8 +111,7 @@ PROCESS_THREAD(collect_common_process, ev, data)
 
   collect_common_net_init();
 
-  /* Send a packet every PERIOD to PERIOD + 2 seconds. */
-  prev_time = (clock_time()*1000) / CLOCK_SECOND;
+  /* Send a packet every 60-62 seconds. */
   etimer_set(&period_timer, CLOCK_SECOND * PERIOD);
   while(1) {
     PROCESS_WAIT_EVENT();
@@ -135,7 +131,7 @@ PROCESS_THREAD(collect_common_process, ev, data)
         }
         tmp = strtolong(line);
         time_offset = clock_seconds() - tmp;
-        //printf("Time offset set to %lu\n", time_offset);
+        printf("Time offset set to %lu\n", time_offset);
       } else if(strncmp(line, "mac ", 4) == 0) {
         line +=4;
         while(*line == ' ') {
@@ -143,18 +139,18 @@ PROCESS_THREAD(collect_common_process, ev, data)
         }
         if(*line == '0') {
           NETSTACK_RDC.off(1);
-          /* printf("mac: turned MAC off (keeping radio on): %s\n",
-                 NETSTACK_RDC.name); */
+          printf("mac: turned MAC off (keeping radio on): %s\n",
+                 NETSTACK_RDC.name);
         } else {
           NETSTACK_RDC.on();
-          /* printf("mac: turned MAC on: %s\n", NETSTACK_RDC.name); */
+          printf("mac: turned MAC on: %s\n", NETSTACK_RDC.name);
         }
 
       } else if(strncmp(line, "~K", 2) == 0 ||
                 strncmp(line, "killall", 7) == 0) {
         /* Ignore stop commands */
       } else {
-    	  //printf("unhandled command: %s\n", line);
+        printf("unhandled command: %s\n", line);
       }
     }
     if(ev == PROCESS_EVENT_TIMER) {
@@ -164,10 +160,7 @@ PROCESS_THREAD(collect_common_process, ev, data)
       } else if(data == &wait_timer) {
         if(send_active) {
           /* Time to send the data */
-          uint32_t now = (clock_time()*1000)/CLOCK_SECOND;
-          interval = (uint16_t) (now - prev_time);
-          prev_time = now;
-          collect_common_send(now, interval);
+          collect_common_send();
         }
       }
     }

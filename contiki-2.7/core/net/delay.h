@@ -7,6 +7,9 @@
 #include "net/packetbuf.h"
 #include "net/queuebuf.h"
 
+//void time_memb_init();
+//void neighbor_info_send_mac (rimeaddr_t *dest) ;
+
 #define MAX_DELAY 3000
 typedef uint32_t delay_t;
 

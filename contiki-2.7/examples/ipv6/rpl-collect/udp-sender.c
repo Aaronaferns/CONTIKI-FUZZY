@@ -31,7 +31,6 @@
 #include "net/uip.h"
 #include "net/uip-ds6.h"
 #include "net/uip-udp-packet.h"
-#include "net/neighbor-info.h"
 #include "net/rpl/rpl.h"
 #include "dev/serial-line.h"
 #if CONTIKI_TARGET_Z1
@@ -42,15 +41,13 @@
 #include "collect-common.h"
 #include "collect-view.h"
 
-#include "sys/battery_charge.h"
-
 #include <stdio.h>
 #include <string.h>
 
 #define UDP_CLIENT_PORT 8775
 #define UDP_SERVER_PORT 5688
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
 
 static struct uip_udp_conn *client_conn;
@@ -66,26 +63,24 @@ collect_common_set_sink(void)
   /* A udp client can never become sink */
 }
 /*---------------------------------------------------------------------------*/
-extern uip_ds6_route_t uip_ds6_routing_table[UIP_DS6_ROUTE_NB];
 
 void
 collect_common_net_print(void)
 {
   rpl_dag_t *dag;
-  int i;
+  uip_ds6_route_t *r;
+
   /* Let's suppose we have only one instance */
   dag = rpl_get_any_dag();
   if(dag->preferred_parent != NULL) {
     PRINTF("Preferred parent: ");
-    PRINT6ADDR(&dag->preferred_parent->addr);
+    PRINT6ADDR(rpl_get_parent_ipaddr(dag->preferred_parent));
     PRINTF("\n");
   }
-  PRINTF("Route entries:\n");
-  for(i = 0; i < UIP_DS6_ROUTE_NB; i++) {
-    if(uip_ds6_routing_table[i].isused) {
-      PRINT6ADDR(&uip_ds6_routing_table[i].ipaddr);
-      PRINTF("\n");
-    }
+  for(r = uip_ds6_route_head();
+      r != NULL;
+      r = uip_ds6_route_next(r)) {
+    PRINT6ADDR(&r->ipaddr);
   }
   PRINTF("---\n");
 }
@@ -99,7 +94,7 @@ tcpip_handler(void)
 }
 /*---------------------------------------------------------------------------*/
 void
-collect_common_send(uint32_t now, uint16_t interval)
+collect_common_send(void)
 {
   static uint8_t seqno;
   struct {
@@ -124,7 +119,7 @@ collect_common_send(uint32_t now, uint16_t interval)
   seqno++;
   if(seqno == 0) {
     /* Wrap to 128 to identify restarts */
-	  seqno = 128;
+    seqno = 128;
   }
   msg.seqno = seqno;
 
@@ -137,12 +132,12 @@ collect_common_send(uint32_t now, uint16_t interval)
     preferred_parent = dag->preferred_parent;
     if(preferred_parent != NULL) {
       uip_ds6_nbr_t *nbr;
-      nbr = uip_ds6_nbr_lookup(&preferred_parent->addr);
+      nbr = uip_ds6_nbr_lookup(rpl_get_parent_ipaddr(preferred_parent));
       if(nbr != NULL) {
         /* Use parts of the IPv6 address as the parent address, in reversed byte order. */
         parent.u8[RIMEADDR_SIZE - 1] = nbr->ipaddr.u8[sizeof(uip_ipaddr_t) - 2];
         parent.u8[RIMEADDR_SIZE - 2] = nbr->ipaddr.u8[sizeof(uip_ipaddr_t) - 1];
-        parent_etx = neighbor_info_get_metric((rimeaddr_t *) &nbr->lladdr) / 2;
+        parent_etx = rpl_get_parent_rank((rimeaddr_t *) uip_ds6_nbr_get_ll(nbr)) / 2;
       }
     }
     rtmetric = dag->rank;
@@ -159,18 +154,6 @@ collect_common_send(uint32_t now, uint16_t interval)
                                  parent_etx, rtmetric,
                                  num_neighbors, beacon_interval);
 
-
-
-/*  msg.msg.sensors[6] = preferred_parent->mc.obj.etx;
-  msg.msg.sensors[7] = parent_etx;*/
-  msg.msg.sensors[6] = battery_charge_value;
-  msg.msg.sensors[7] = battery_charge_dec_value;
-#if CONTIKI_DELAY
-  msg.msg.sensors[8] = preferred_parent->mc.obj.latency;
-  msg.msg.sensors[9] = preferred_parent->delay_metric;
-#endif /* CONTIKI_DELAY */
-
-  /* printf("%d\n",msg.seqno);*/
   uip_udp_packet_sendto(client_conn, &msg, sizeof(msg),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 }

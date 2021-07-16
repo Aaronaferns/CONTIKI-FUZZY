@@ -32,13 +32,10 @@
 #ifndef CONTIKI_DEFAULT_CONF_H
 #define CONTIKI_DEFAULT_CONF_H
 
-
-#ifndef FUZZY
-#define FUZZY 1
-#endif
 #ifndef CONTIKI_DELAY
 #define CONTIKI_DELAY 1
 #endif
+
 /*---------------------------------------------------------------------------*/
 /* Netstack configuration
  *
@@ -121,7 +118,7 @@
 /* UIP_CONF_IPV6 specifies whether or not IPv6 should be used. If IPv6
    is not used, IPv4 is used instead. */
 #ifndef UIP_CONF_IPV6
-#define UIP_CONF_IPV6 0
+#define UIP_CONF_IPV6 1
 #endif /* UIP_CONF_IPV6 */
 
 /* UIP_CONF_BUFFER_SIZE specifies how much memory should be reserved
@@ -248,4 +245,3 @@
 
 
 #endif /* CONTIKI_DEFAULT_CONF_H */
-

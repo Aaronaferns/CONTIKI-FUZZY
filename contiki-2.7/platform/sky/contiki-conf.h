@@ -213,14 +213,3 @@
 
 
 #endif /* CONTIKI_CONF_H */
-#ifdef CONTIKI_CONF_DELAY
-#define CONTIKI_DELAY CONTIKI_CONF_DELAY
-#else
-#define CONTIKI_DELAY	1
-#endif /* CONTIKI_CONF_DELAY */
-
-#ifdef CONF_FUZZY
-#define FUZZY CONF_FUZZY
-#else
-#define FUZZY	1
-#endif /* CONF_FUZZY */

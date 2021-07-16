@@ -61,33 +61,15 @@ void NEIGHBOR_STATE_CHANGED(uip_ds6_nbr_t *n);
 #define NEIGHBOR_STATE_CHANGED(n)
 #endif /* UIP_DS6_CONF_NEIGHBOR_STATE_CHANGED */
 
-#if CONTIKI_DELAY
-#ifdef UIP_CONF_DS6_LINK_NEIGHBOR_CALLBACK
-#define LINK_NEIGHBOR_CALLBACK(addr, status, numtx, delay) UIP_CONF_DS6_LINK_NEIGHBOR_CALLBACK(addr, status, numtx, delay)
-void LINK_NEIGHBOR_CALLBACK(const rimeaddr_t *addr, int status, int numtx, delay_t delay);
-#else
-#define LINK_NEIGHBOR_CALLBACK(addr, status, numtx, delay)
-#endif /* UIP_CONF_DS6_LINK_NEIGHBOR_CALLBACK */
-#else
 #ifdef UIP_CONF_DS6_LINK_NEIGHBOR_CALLBACK
 #define LINK_NEIGHBOR_CALLBACK(addr, status, numtx) UIP_CONF_DS6_LINK_NEIGHBOR_CALLBACK(addr, status, numtx)
 void LINK_NEIGHBOR_CALLBACK(const rimeaddr_t *addr, int status, int numtx);
 #else
 #define LINK_NEIGHBOR_CALLBACK(addr, status, numtx)
 #endif /* UIP_CONF_DS6_LINK_NEIGHBOR_CALLBACK */
-#endif /*CONTIKI_DELAY*/
+
 NBR_TABLE_GLOBAL(uip_ds6_nbr_t, ds6_neighbors);
-/*---------------------------------------------------------------------------*/
-#if CONTIKI_DELAY
 
-/* Declaration for delay/latency management */
-#include "net/delay.h"
-
-extern unsigned long before_trans;
-extern unsigned long after_ack;
-MEMB(time_memb, struct time_queue, MAX_QUEUED_PACKETS);
-LIST(time_list);
-#endif/*CONTIKI_DELAY*/
 /*---------------------------------------------------------------------------*/
 void
 uip_ds6_neighbors_init(void)
@@ -215,22 +197,11 @@ uip_ds6_link_neighbor_callback(int status, int numtx)
   if(rimeaddr_cmp(dest, &rimeaddr_null)) {
     return;
   }
-  #if CONTIKI_DELAY
-	struct time_queue *item;
-	delay_t delay;
-  #endif /* CONTIKI_DELAY */
 
+  LINK_NEIGHBOR_CALLBACK(dest, status, numtx);
+
+#if UIP_DS6_LL_NUD
   if(status == MAC_TX_OK) {
-    #if CONTIKI_DELAY
-	  if(!rimeaddr_cmp(dest,&rimeaddr_null) && list_length(time_list) > 0){
-	  item = list_pop(time_list);
-	  delay = (before_trans - item->before_mac) + (after_ack - before_trans)/2;
-	  PRINTF("#A delay: 6LowPAN fragment sent to %d.%d at %lu trans %lu ack %lu pkt_dly %d\n",
-			dest->u8[6], dest->u8[7], item->before_mac, before_trans, after_ack, delay);
-	  memb_free(&time_memb,item);
-	}
-    #endif /* CONTIKI_DELAY */
-    #if UIP_DS6_LL_NUD
     uip_ds6_nbr_t *nbr;
     nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest);
     if(nbr != NULL &&
@@ -242,10 +213,8 @@ uip_ds6_link_neighbor_callback(int status, int numtx)
       PRINTLLADDR((uip_lladdr_t *)dest);
       PRINTF(" is reachable.\n");
     }
-    #endif /* UIP_DS6_LL_NUD */
   }
-
-LINK_NEIGHBOR_CALLBACK(dest, status, numtx, delay);
+#endif /* UIP_DS6_LL_NUD */
 
 }
 /*---------------------------------------------------------------------------*/
@@ -326,19 +295,4 @@ uip_ds6_get_least_lifetime_neighbor(void)
     nbr = nbr_table_next(ds6_neighbors, nbr);
   }
   return nbr_expiring;
-
-  void neighbor_send_mac (rimeaddr_t *dest) {
-    struct time_queue *item;
-    if(!rimeaddr_cmp(dest,&rimeaddr_null)){
-    	item = memb_alloc(&time_memb);
-    	if(item != NULL){
-    		item->dest = *dest;
-    		item->before_mac = (clock_time()*1000)/CLOCK_SECOND;
-    		list_add(time_list,item);
-    	}
-    	else {
-    		//printf("delay: could not allocate time_memb\n");
-    	}
-    }
-}
 }
