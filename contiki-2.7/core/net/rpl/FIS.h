@@ -17,9 +17,9 @@ uint8_t quality(uint16_t q, uint16_t e);
 #define dly_high(dly) last_t_norm(1800, 2400, dly)
 
 // hc
-#define hc_near(hc) first_t_norm(10, 20, hc)
-#define hc_avg(hc) t_norm(10, 20, 30, 40, hc)
-#define hc_far(hc) last_t_norm(30, 40, hc)
+#define hc_near(hc) first_t_norm(1, 2, hc)
+#define hc_avg(hc) t_norm(1, 2, 3, 4, hc)
+#define hc_far(hc) last_t_norm(3, 4, hc)
 
 //energy
 #define energy_low(eng) first_t_norm(51, 102, (eng))
